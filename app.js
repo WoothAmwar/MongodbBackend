@@ -6,7 +6,8 @@ var logger = require('morgan');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
 var passport = require('passport');
-var authenticated = require('./authenticate');
+var authenticate = require('./authenticate');
+var config = require('./config');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -19,7 +20,7 @@ const mongoose = require('mongoose');
 
 const Dishes = require('./models/dishes');
 
-const url = 'mongodb://localhost:27017/conFusion';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 connect.then((db) => {
@@ -35,39 +36,40 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-//  ------------------ //* means the code was used with cookies
+//  ------------------ //* means the code was used with cookies  //& means it was used with session
 //* app.use(cookieParser('12345-67890-09876-54321'));
 
-app.use(session({
-  name: 'session-id',
-  secret: '12345-67890-09876-54321',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}));
+//& app.use(session({
+//   name: 'session-id',
+//   secret: '12345-67890-09876-54321',
+//   saveUninitialized: false,
+//   resave: false,
+//   store: new FileStore()
+// }));
 
 app.use(passport.initialize());
-app.use(passport.session());
+//& app.use(passport.session());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-function auth(req, res, next) {  // Main purpose moved to ../models/users.js
-  //* console.log(req.headers);  // see what is coming in from the client side
-  // console.log(req.session);  // req.signedCookies
+//& function auth(req, res, next) {  // Main purpose moved to ../models/users.js
+//   //* console.log(req.headers);  // see what is coming in from the client side
+//   // console.log(req.session);  // req.signedCookies
 
-  //*  req.signedCookies.user
-  if (!req.user) {  // if incoming user has not been authorized yet (Has no signed cookie with user field)
-    var err = new Error("You are not authenticated!");
-    err.status = 403;
-    return next(err);
-  }
-  else {  // passport has done the authentication and req.user is loaded on to the request message
-    next();
-  }
-}
+//   //*  req.signedCookies.user
+//   if (!req.user) {  // if incoming user has not been authorized yet (Has no signed cookie with user field)
+//     var err = new Error("You are not authenticated!");
+//     err.status = 403;
+//     return next(err);
+//   }
+//   else {  // passport has done the authentication and req.user is loaded on to the request message
+//     next();
+//   }
+// }
+
 // Middleware past this point needs authorization
-app.use(auth);
+// app.use(authenticate);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
